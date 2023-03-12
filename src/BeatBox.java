@@ -7,10 +7,11 @@ public class BeatBox {
 
     private JPanel mainPanel, checkBoxesPanel;
     private JButton startButton, stopButton, tempoUpButton, tempoDownButton;
+    private JButton clearButton;
     Sequencer sequencer;
     Sequence sequence;
     Track track;
-    private ArrayList<JCheckBox> checkBoxesList = new ArrayList<>();
+    private final ArrayList<JCheckBox> checkBoxesList = new ArrayList<>();
     private final int[] instruments = {35, 42, 46, 38, 49, 39, 50, 60, 70, 72, 64, 56, 58, 47, 67, 63};
 
     public BeatBox() {
@@ -25,6 +26,8 @@ public class BeatBox {
         tempoUpButton.addActionListener(e -> sequencer.setTempoFactor((float)(sequencer.getTempoFactor() * 1.3)));
 
         tempoDownButton.addActionListener(e -> sequencer.setTempoFactor((float)(sequencer.getTempoFactor() * 0.97)));
+
+        clearButton.addActionListener(e -> clearComposition());
     }
     private void createCheckBoxes() {
         for(int i = 0; i < 256; i++) {
@@ -102,6 +105,11 @@ public class BeatBox {
             ex.printStackTrace();
         }
         return event;
+    }
+
+    public void clearComposition() {
+        for (JCheckBox chBox : checkBoxesList)
+            chBox.setSelected(false);
     }
 
     public static void main(String[] args) {
