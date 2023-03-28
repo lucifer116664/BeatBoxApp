@@ -1,17 +1,18 @@
 import javax.sound.midi.*;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.io.*;
 import java.util.ArrayList;
 
 public class BeatBox {
-
     private JPanel mainPanel, checkBoxesPanel;
-    private JButton startButton, stopButton, tempoUpButton, tempoDownButton;
-    private JButton clearButton;
-    Sequencer sequencer;
-    Sequence sequence;
-    Track track;
-    private final ArrayList<JCheckBox> checkBoxesList = new ArrayList<>();
+    private JButton startButton, stopButton, tempoUpButton, tempoDownButton, clearButton;
+    private final static JMenuBar menuBar = new JMenuBar();
+    private Sequencer sequencer;
+    private Sequence sequence;
+    private Track track;
+    private ArrayList<JCheckBox> checkBoxesList = new ArrayList<>();
     private final int[] instruments = {35, 42, 46, 38, 49, 39, 50, 60, 70, 72, 64, 56, 58, 47, 67, 63};
 
     public BeatBox() {
@@ -19,16 +20,21 @@ public class BeatBox {
         createCheckBoxes();
         setUpMidi();
 
+        JMenu fileMenu = new JMenu("File");
+        menuBar.add(fileMenu);
+        JMenuItem saveCompositionMenuItem = new JMenuItem("Save"), loadCompositionMenuItem = new JMenuItem("Load");
+        fileMenu.add(saveCompositionMenuItem);
+        fileMenu.add(loadCompositionMenuItem);
+
+        saveCompositionMenuItem.addActionListener(e -> saveComposition());
+        loadCompositionMenuItem.addActionListener(e -> loadComposition());
         startButton.addActionListener(e -> buildTrackAndStart());
-
         stopButton.addActionListener(e -> sequencer.stop());
-
         tempoUpButton.addActionListener(e -> sequencer.setTempoFactor((float)(sequencer.getTempoFactor() * 1.3)));
-
         tempoDownButton.addActionListener(e -> sequencer.setTempoFactor((float)(sequencer.getTempoFactor() * 0.97)));
-
         clearButton.addActionListener(e -> clearComposition());
     }
+
     private void createCheckBoxes() {
         for(int i = 0; i < 256; i++) {
             JCheckBox chBox = new JCheckBox();
@@ -48,6 +54,42 @@ public class BeatBox {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+
+    public void clearComposition() {
+        for (JCheckBox chBox : checkBoxesList)
+            chBox.setSelected(false);
+    }
+
+    public void saveComposition() {
+        JFileChooser fileChooser = new JFileChooser();
+        int ret = fileChooser.showDialog(null, "Save");
+        if(ret == JFileChooser.APPROVE_OPTION) {
+            try(FileOutputStream fOut = new FileOutputStream(fileChooser.getSelectedFile().getAbsolutePath());
+                ObjectOutputStream oOut = new ObjectOutputStream(fOut)) {
+                for(JCheckBox chBox : checkBoxesList) {
+                    oOut.writeObject(chBox.isSelected());
+                }
+            }  catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void loadComposition() {
+        JFileChooser fileChooser = new JFileChooser();
+        int ret = fileChooser.showDialog(null, "Open file");
+        if (ret == JFileChooser.APPROVE_OPTION) {
+            try(FileInputStream fIn = new FileInputStream(fileChooser.getSelectedFile().getAbsolutePath());
+                   ObjectInputStream oIn = new ObjectInputStream(fIn)) {
+                for(JCheckBox chBox : checkBoxesList) {
+                    chBox.setSelected((boolean)oIn.readObject());
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
     private void buildTrackAndStart() {
@@ -82,7 +124,6 @@ public class BeatBox {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-
     }
 
     public void makeTracks(int[] keyList) {
@@ -107,10 +148,6 @@ public class BeatBox {
         return event;
     }
 
-    public void clearComposition() {
-        for (JCheckBox chBox : checkBoxesList)
-            chBox.setSelected(false);
-    }
 
     public static void main(String[] args) {
         JFrame frame = new JFrame("BeatBox");
@@ -118,5 +155,7 @@ public class BeatBox {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
+
+        frame.setJMenuBar(menuBar);
     }
 }
